@@ -1,65 +1,16 @@
 # Applied Precision Medicine - DNA analysis in trios
 This page is a summary of the report for the project DNA analysis in trios, together with the scripts used to perform the analysis for Case 3: 
 
-A medical doctor at medical genetics meets a young girl with frequent coughing. Additionally, she recently suffered a severe lung inflammation. She still has obvious difficulties coughing and breathing, and she is constantly out of breath. Her appearance is that of a child rather small and slim for her age. Neither small stature nor sensitivity to lung inflammation run in the family. The family stems from Southern Europe. The medical doctor suspects a genetic cause and orders whole genome sequencing of the patient and the parents to confirm the diagnosis. The MD asks you to analyze and evaluate the sequencing results.
+"_A medical doctor at medical genetics meets a young girl with frequent coughing. Additionally, she recently suffered a severe lung inflammation. She still has obvious difficulties coughing and breathing, and she is constantly out of breath. Her appearance is that of a child rather small and slim for her age. Neither small stature nor sensitivity to lung inflammation run in the family. The family stems from Southern Europe. The medical doctor suspects a genetic cause and orders whole genome sequencing of the patient and the parents to confirm the diagnosis. The MD asks you to analyze and evaluate the sequencing results._"
 
 For this project, we only focused on *de novo* variants, starting from whole genome sequencing (WGS) data of an affected child and the parents (unaffected). Project data are synthetic with the pathogenic variant mutated manually (find it under the data folder). Here are the steps we followed for the trio analysis: [(0) Getting used to the project directory](#step-0---getting-used-to-the-project-directory), [(1) Read alignment](#step-1---read-alignment), [(2) Variant calling](#step-2---variant-calling), [(3) Joint Genotyping](#step-3---joint-genotyping), [(4) Variant filtering](#step-4---variant-filtering), [(5) De novo detection and more filters](#step-5---de-novo-detection-and-more-filters), [(6) Annotating the de novo candidates](#step-6-annotating-the-de-novo-candidates).
 
 ## Step 0 - Getting used to the project directory
-
-#### Log into your UPPMAX Rackham account
-From the terminal, use `ssh username@rackham.uppmax.uu.se` and enter your UPPMAX password, you are now in your login node `/home/username`. Later to retrieve data, in another terminal window, connect to file transfer system by `sftp username@rackham.uppmax.uu.se`.
-
-#### Project data overview
-All project data are stored in the directory `/crex/proj/uppmax2024-2-1/rare_variants`. To check what it contains, instead of `ls` which only lists the files, you can use `du -sh /crex/proj/uppmax2024-2-1/rare_variants/*` which shows the total size of a directory/file in a human-readable format (e.g., KB, MB, GB; `du` = disk usage, `-s` = summarize, `-h` = human-readable, `*` is standing in for “whatever string comes after `case1/`”):
-```
-154G	/crex/proj/uppmax2024-2-1/rare_variants/case1
-148G	/crex/proj/uppmax2024-2-1/rare_variants/case3
-163M	/crex/proj/uppmax2024-2-1/rare_variants/ClinVar
-28G	/crex/proj/uppmax2024-2-1/rare_variants/dbSNP
-24G	/crex/proj/uppmax2024-2-1/rare_variants/reference
-167G	/crex/proj/uppmax2024-2-1/rare_variants/testing
-```
-
-- `case1` and `case3` are the two containing trio WGS data, for the two case options. The corresponding folders have each sample's raw sequencing from high-throughput sequencing platforms (e.g., Illumina).
-```
-du -sh /crex/proj/uppmax2024-2-1/rare_variants/case1/*
-# the lines below are the returned information from the command above, don't copy
-44G	/crex/proj/uppmax2024-2-1/rare_variants/case1/child
-57G	/crex/proj/uppmax2024-2-1/rare_variants/case1/father
-54G	/crex/proj/uppmax2024-2-1/rare_variants/case1/mother
-```
-
- Originally in FASTQ format (.fq.gz - .fq or .fastq extension indicates the FASTQ format, while the .gz suffix signifies that it is a compressed file, saving storage space), each read is recorded along with its base qualities. Reads are typically produced as paired-end reads (forward and reverse), meaning the sequencer reads both ends of a DNA fragment.
-
-```
-du -sh /crex/proj/uppmax2024-2-1/rare_variants/case1/child/*
-
-22G	/crex/proj/uppmax2024-2-1/rare_variants/case1/child/forward.fq.gz
-23G	/crex/proj/uppmax2024-2-1/rare_variants/case1/child/reverse.fq.gz
-```
-
-- `ClinVar` contains resources from the database of clinically relevant variants to provide information on pathogenicity (e.g., “Pathogenic,” “Likely benign”) and associated diseases. `dbSNP` contains resources primarily used to annotate variants with their corresponding rsIDs and allele frequency information, but for this project, using ClinVar only is okay.
-```
-du -sh /crex/proj/uppmax2024-2-1/rare_variants/ClinVar/*
-
-162M	/crex/proj/uppmax2024-2-1/rare_variants/ClinVar/clinvar_20250831.vcf.gz
-552K	/crex/proj/uppmax2024-2-1/rare_variants/ClinVar/clinvar_20250831.vcf.gz.tbi
-```
+From the terminal, use `ssh username@rackham.uppmax.uu.se` and enter your UPPMAX password, you are now in your login node `/home/username`. All project data are stored in the directory `/crex/proj/uppmax2024-2-1/rare_variants` in the following way: 
+- `case3` contains trio WGS data with each sample's raw sequencing from high-throughput sequencing platforms (e.g., Illumina).
+- `ClinVar` contains resources from the database of clinically relevant variants to provide information on pathogenicity and associated diseases.
 - `reference` contains the human genome assenbly (GRCh38) for read alignment and variant calling, to ensure all analyses are performed against a standardized coordinate system.
-
- And as you see, the data are huuuuuge, so we should pay extra attention on efficiently using the disk space, avoiding redundant analyses or intermediate results. Also, we must be efficient in running the analyses, to save time and money (yes, using the HPC costs tons of money). Guidance on how to accelerate your analyses as well as the approximate runtime will be provided alongside the progress.
-
-#### Make your own workspace
-**One important thing is: do not edit or remove the data provided.** Your personal storage by default cannot accommodate most intermediate data generated during the analyses, so you would be working inside the project folder, where UPPMAX has provided us more storage.
-```
-PROJECT_FOLDER="/crex/proj/uppmax2024-2-1/rare_variants"
-mkdir $PROJECT_FOLDER/your_name
-```
-From now on, you will be working inside `$PROJECT_FOLDER/your_name` (use `cd $PROJECT_FOLDER/your_name` to get there).
-
-#### Quality control (QC) of FASTQ?
-Usually, QC is needed to check for sequencing quality issues (adapter contamination, low-quality bases, abnormal GC content), but since our data is synthetic, this step can be omitted. `fastp` is an efficient tool for this step, in case of curiosity, if you run QC for the sequencing data above, you will just get "Sequences flagged as poor quality: 0" reported in its output .html files.
+- `PROJECT_FOLDER` will be the folder where we will be performing the calculations and where the scripts will be allocated.
 
 ## Step 1 - Read alignment
 
