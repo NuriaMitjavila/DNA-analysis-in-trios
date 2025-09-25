@@ -31,5 +31,5 @@ echo "$(date) Indexing filtered VCF..."
 
 bcftools index -t $FILTERED_VCF
 
-echo "Filtering complete: $FILTERED_VCF"
+echo "Filtering complete. Filtered VCF: $FILTERED_VCF"
 
