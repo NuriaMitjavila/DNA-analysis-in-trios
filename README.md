@@ -8,7 +8,8 @@ For this project, we only focused on *de novo* variants, starting from whole gen
 ### Step 0 - Getting used to the project directory
 Download the data from the GitHub repository and store it in the same directory so there is no need to modify the scripts. Here is the distribution: 
 - `data` contains the data necessary to perform the analysis: `case3` contains trio WGS data, `ClinVar` contains resources from the database of clinically relevant variants and `reference` contains the human genome assenbly (GRCh38) to ensure all analyses are performed against a standardized coordinate system.
-- `scripts` will be the folder where we will be performing the calculations and where the scripts will be allocated.<br><br>
+- `scripts` contains the commands that are going to be used to run the analysis. For the different steps, there is a folder created.
+- `output` contains all the files that one is creating when running the different scripts. <br><br>
 
 ### Step 1 - Read alignment
 Raw sequencing reads in FASTQ format were aligned to the human reference genome GRCh38 using the Burrows-Wheeler Aligner. Paired-end reads from each sample were processed in parallel. Intermediate SAM and BAM files were stored in a node-local temporary directory to optimize speed and storage. Aligned reads were converted into CRAM format, indexed, and stored for downstream analysis. **You can find the script in: "scripts/step1"** <br><br>
