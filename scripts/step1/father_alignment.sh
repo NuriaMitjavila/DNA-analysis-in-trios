@@ -12,14 +12,14 @@ module load bwa bwa-mem2 samtools
 INTERMEDIATE_SAM="$TMPDIR/aligned_reads_father.sam"
 INTERMEDIATE_BAM="$TMPDIR/aligned_reads_father.bam"
 
-PROJECT_FOLDER="/crex/proj/uppmax2024-2-1/private/nurmi143/project"
-REF="$PROJECT_FOLDER/data/reference"
-OUTPUT_CRAM="$PROJECT_FOLDER/output/father_aligned.cram"
+PROJECT_FOLDER="/crex/proj/uppmax2024-2-1/rare_variants"
+REF="$PROJECT_FOLDER/reference"
+OUTPUT_CRAM="$PROJECT_FOLDER/nuria/output/father_aligned.cram"
 
 bwa-mem2 mem -t 16 -R '@RG\tID:father\tSM:father\tPL:ILLUMINA' \
     $REF/Homo_sapiens.GRCh38.dna.primary_assembly.fa \
-    $PROJECT_FOLDER/data/case3/father/forward.fq.gz \
-    $PROJECT_FOLDER/data/case3/father/reverse.fq.gz \
+    $PROJECT_FOLDER/case3/father/forward.fq.gz \
+    $PROJECT_FOLDER/case3/father/reverse.fq.gz \
 > "$INTERMEDIATE_SAM"
 
 samtools sort -@ 16 -o "$INTERMEDIATE_BAM" "$INTERMEDIATE_SAM"
