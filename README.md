@@ -6,10 +6,11 @@ This page is a summary of the report for the project DNA analysis in trios, toge
 For this project, we only focused on *de novo* variants, starting from whole genome sequencing (WGS) data of an affected child and the parents (unaffected). Project data are synthetic with the pathogenic variant mutated manually (find it under the data folder). Here are the steps we followed for the trio analysis: [(0) Getting used to the project directory](#step-0---getting-used-to-the-project-directory), [(1) Read alignment](#step-1---read-alignment), [(2) Variant calling](#step-2---variant-calling), [(3) Joint Genotyping](#step-3---joint-genotyping), [(4) Variant filtering](#step-4---variant-filtering), [(5) De novo detection and more filters](#step-5---de-novo-detection-and-more-filters), [(6) Annotating the de novo candidates](#step-6-annotating-the-de-novo-candidates).<br><br>
 
 ### Step 0 - Getting used to the project directory
-Download the data from the GitHub repository and store it in the same directory so there is no need to modify the scripts. Here is the distribution: 
-- `data` contains the data necessary to perform the analysis: `case3` contains trio WGS data, `ClinVar` contains resources from the database of clinically relevant variants and `reference` contains the human genome assenbly (GRCh38) to ensure all analyses are performed against a standardized coordinate system.
-- `scripts` contains the commands that are going to be used to run the analysis with one folder for each step.
-- `output` contains all the files that one is creating when running the different scripts. <br><br>
+From the terminal, use `ssh username@rackham.uppmax.uu.se` and enter your UPPMAX password, you are now in your login node `/home/username`. All project data are stored in the directory `/crex/proj/uppmax2024-2-1/rare_variants` in the following way: 
+- `case3` contains trio WGS data with each sample's raw sequencing from high-throughput sequencing platforms (e.g., Illumina).
+- `ClinVar` contains resources from the database of clinically relevant variants to provide information on pathogenicity and associated diseases.
+- `reference` contains the human genome assenbly (GRCh38) for read alignment and variant calling, to ensure all analyses are performed against a standardized coordinate system.
+- `PROJECT_FOLDER` will be the folder where we will be performing the calculations and where the scripts will be allocated.<br><br>
 
 ### Step 1 - Read alignment
 Raw sequencing reads in FASTQ format were aligned to the human reference genome GRCh38 using the Burrows-Wheeler Aligner. Paired-end reads from each sample were processed in parallel. Intermediate SAM and BAM files were stored in a node-local temporary directory to optimize speed and storage. Aligned reads were converted into CRAM format, indexed, and stored for downstream analysis. **You can find the script in: "scripts/step1"** <br><br>
